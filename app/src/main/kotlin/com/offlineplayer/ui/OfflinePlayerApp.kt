@@ -55,10 +55,12 @@ fun OfflinePlayerApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val isPlayerRoute = currentDestination?.route == "player"
+    val isQueueRoute = currentDestination?.route == "queue"
+    val hideBottomBar = isPlayerRoute || isQueueRoute
 
     Scaffold(
         bottomBar = {
-            if (!isPlayerRoute) {
+            if (!hideBottomBar) {
                 Column {
                     com.offlineplayer.feature.player.MiniPlayer(
                         onClick = {
@@ -119,6 +121,12 @@ fun OfflinePlayerApp() {
             }
             composable("player") {
                 com.offlineplayer.feature.player.NowPlayingScreen(
+                    onNavigateUp = { navController.navigateUp() },
+                    onNavigateToQueue = { navController.navigate("queue") }
+                )
+            }
+            composable("queue") {
+                com.offlineplayer.feature.player.QueueScreen(
                     onNavigateUp = { navController.navigateUp() }
                 )
             }

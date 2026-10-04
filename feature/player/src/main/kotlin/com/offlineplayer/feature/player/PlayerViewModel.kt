@@ -14,6 +14,7 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
 
     val playbackState: StateFlow<PlaybackState> = playerController.state
+    val queue: StateFlow<List<com.offlineplayer.core.model.Track>> = playerController.queue
 
     fun togglePlayPause() {
         playerController.playPause()
@@ -37,5 +38,21 @@ class PlayerViewModel @Inject constructor(
 
     fun toggleRepeatMode() {
         playerController.cycleRepeatMode()
+    }
+
+    fun playQueueItem(index: Int) {
+        playerController.seekTo(index, 0L)
+    }
+
+    fun removeFromQueue(index: Int) {
+        playerController.removeFromQueue(index)
+    }
+
+    fun moveQueueItem(from: Int, to: Int) {
+        playerController.moveQueueItem(from, to)
+    }
+
+    fun clearQueue() {
+        playerController.clearQueue()
     }
 }

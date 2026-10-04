@@ -65,6 +65,7 @@ class PlayerController @Inject constructor(
                             _isConnected.value = true
                             mc.addListener(playerListener)
                             syncState(mc)
+                            syncQueue(mc)
                         }
                     },
                     MoreExecutors.directExecutor()
@@ -91,6 +92,7 @@ class PlayerController @Inject constructor(
     }
 
     fun seekTo(positionMs: Long) { controller?.seekTo(positionMs) }
+    fun seekTo(mediaItemIndex: Int, positionMs: Long) { controller?.seekTo(mediaItemIndex, positionMs) }
     fun seekToNext() { controller?.seekToNextMediaItem() }
     fun seekToPrevious() { controller?.seekToPreviousMediaItem() }
 
@@ -147,6 +149,9 @@ class PlayerController @Inject constructor(
 
     // ── Internal ────────────────────────────────────────────────────
 
+    private val _queue = MutableStateFlow<List<Track>>(emptyList())
+    val queue: StateFlow<List<Track>> = _queue.asStateFlow()
+
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) { syncFromController() }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { syncFromController() }
@@ -160,10 +165,26 @@ class PlayerController @Inject constructor(
         ) {
             syncFromController()
         }
+        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+            syncFromController()
+            syncQueue(controller)
+        }
     }
 
     private fun syncFromController() {
         controller?.let { syncState(it) }
+    }
+    
+    private fun syncQueue(mc: MediaController?) {
+        if (mc == null) {
+            _queue.value = emptyList()
+            return
+        }
+        val tracks = mutableListOf<Track>()
+        for (i in 0 until mc.mediaItemCount) {
+            tracks.add(mc.getMediaItemAt(i).toTrack())
+        }
+        _queue.value = tracks
     }
 
     private fun syncState(mc: MediaController) {
