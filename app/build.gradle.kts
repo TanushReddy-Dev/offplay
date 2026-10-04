@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -54,6 +55,8 @@ android {
 }
 
 dependencies {
+    "baselineProfile"(project(":benchmark"))
+    
     // Project modules
     implementation(project(":core:model"))
     implementation(project(":core:database"))

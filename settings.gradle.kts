@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 rootProject.name = "OfflinePlayer"
 
 include(":app")
+include(":benchmark")
 
 // Core modules
 include(":core:model")
