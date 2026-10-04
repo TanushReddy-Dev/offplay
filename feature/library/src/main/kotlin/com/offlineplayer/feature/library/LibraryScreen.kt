@@ -36,12 +36,29 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.offlineplayer.core.model.Track
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val showMenu = remember { mutableStateOf(false) }
+
+    val folderLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            viewModel.addSafFolder(it)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -50,6 +67,23 @@ fun LibraryScreen(
                 actions = {
                     IconButton(onClick = { viewModel.scanLocalMedia() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Scan Media")
+                    }
+                    Box {
+                        IconButton(onClick = { showMenu.value = true }) {
+                            Icon(Icons.Default.CreateNewFolder, contentDescription = "Add Folder")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu.value,
+                            onDismissRequest = { showMenu.value = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Add local folder") },
+                                onClick = {
+                                    showMenu.value = false
+                                    folderLauncher.launch(null)
+                                }
+                            )
+                        }
                     }
                 }
             )

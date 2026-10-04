@@ -2,9 +2,11 @@ package com.offlineplayer.provider.local
 
 import android.content.ContentUris
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.documentfile.provider.DocumentFile
 import com.offlineplayer.core.database.dao.LibraryDao
 import com.offlineplayer.core.database.entity.LocalFileEntity
 import com.offlineplayer.core.database.entity.TrackEntity
@@ -17,9 +19,15 @@ import javax.inject.Singleton
 @Singleton
 class LocalLibraryScanner @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val libraryDao: LibraryDao
+    private val libraryDao: LibraryDao,
+    private val safFolderManager: SafFolderManager
 ) {
     suspend fun scanMediaStore() = withContext(Dispatchers.IO) {
+        scanMediaStoreInternal()
+        scanSafFoldersInternal()
+    }
+
+    private suspend fun scanMediaStoreInternal() {
         val collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -126,6 +134,109 @@ class LocalLibraryScanner @Inject constructor(
                         LocalFileEntity(uri = uri, size = size, modifiedAt = dateModified, scanState = 2, errorMessage = e.message)
                     )
                 }
+            }
+        }
+    }
+
+    private suspend fun scanSafFoldersInternal() {
+        val folders = safFolderManager.folders.value
+        for (folderUri in folders) {
+            val rootDoc = DocumentFile.fromTreeUri(context, folderUri)
+            if (rootDoc != null && rootDoc.isDirectory) {
+                scanDocumentTree(rootDoc)
+            }
+        }
+    }
+
+    private suspend fun scanDocumentTree(directory: DocumentFile) {
+        val files = directory.listFiles()
+        for (file in files) {
+            if (file.isDirectory) {
+                scanDocumentTree(file)
+            } else if (file.isFile && isAudioFile(file.type, file.name)) {
+                processSafFile(file)
+            }
+        }
+    }
+
+    private fun isAudioFile(mimeType: String?, name: String?): Boolean {
+        if (mimeType?.startsWith("audio/") == true) return true
+        val ext = name?.substringAfterLast('.', "")?.lowercase()
+        return ext in setOf("mp3", "flac", "wav", "m4a", "aac", "ogg", "opus")
+    }
+
+    private suspend fun processSafFile(file: DocumentFile) {
+        val uri = file.uri.toString()
+        val size = file.length()
+        val modifiedAt = file.lastModified()
+
+        val existingFile = libraryDao.getLocalFile(uri)
+        if (existingFile != null && existingFile.size == size && existingFile.modifiedAt == modifiedAt) {
+            return
+        }
+
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, file.uri)
+            
+            val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: file.name ?: "Unknown"
+            val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "Unknown Artist"
+            val albumArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST) ?: artist
+            val album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM) ?: "Unknown Album"
+            val trackNumStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)
+            val trackNum = trackNumStr?.substringBefore('/')?.toIntOrNull() ?: 0
+            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val duration = durationStr?.toLongOrNull() ?: 0L
+            val yearStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
+            val year = yearStr?.substring(0, minOf(4, yearStr.length))?.toIntOrNull() ?: 0
+            val genre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE) ?: ""
+            val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: file.type ?: ""
+            val bitrateStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+            val bitrate = bitrateStr?.toLongOrNull() ?: 0L
+
+            val artistId = libraryDao.getOrCreateArtistId(artist)
+            val albumId = libraryDao.getOrCreateAlbumId(album, artist, year, null) // Artwork can be tricky via SAF
+
+            val track = TrackEntity(
+                title = title,
+                artist = artist,
+                albumArtist = albumArtist,
+                album = album,
+                albumId = albumId,
+                artistId = artistId,
+                trackNumber = trackNum,
+                discNumber = 0,
+                durationMs = duration,
+                year = year,
+                genre = genre,
+                uri = uri,
+                mimeType = mimeType,
+                codec = "",
+                sampleRate = 0,
+                bitDepth = 0,
+                channels = 0,
+                bitrate = bitrate,
+                size = size,
+                dateModified = modifiedAt,
+                dateAdded = System.currentTimeMillis(),
+                artworkUri = null // For SAF files, we could extract embedded art and save it locally, but we'll skip for now
+            )
+
+            libraryDao.insertTrack(track)
+            libraryDao.insertLocalFile(
+                LocalFileEntity(uri = uri, size = size, modifiedAt = modifiedAt, scanState = 1)
+            )
+
+        } catch (e: Exception) {
+            Log.e("LocalLibraryScanner", "Failed to extract SAF metadata: $uri", e)
+            libraryDao.insertLocalFile(
+                LocalFileEntity(uri = uri, size = size, modifiedAt = modifiedAt, scanState = 2, errorMessage = e.message)
+            )
+        } finally {
+            try {
+                retriever.release()
+            } catch (e: Exception) {
+                // Ignore
             }
         }
     }

@@ -18,7 +18,8 @@ import javax.inject.Inject
 class LibraryViewModel @Inject constructor(
     private val libraryDao: LibraryDao,
     private val playerController: PlayerController,
-    private val localProvider: LocalProvider
+    private val localProvider: LocalProvider,
+    private val safFolderManager: com.offlineplayer.provider.local.SafFolderManager
 ) : ViewModel() {
 
     val uiState: StateFlow<LibraryUiState> = libraryDao.getAllTracks()
@@ -57,6 +58,11 @@ class LibraryViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = LibraryUiState.Loading
         )
+
+    fun addSafFolder(uri: android.net.Uri) {
+        safFolderManager.addFolder(uri)
+        scanLocalMedia() // Trigger a scan immediately
+    }
 
     fun scanLocalMedia() {
         viewModelScope.launch {
