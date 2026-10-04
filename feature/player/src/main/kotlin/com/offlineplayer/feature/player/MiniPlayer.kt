@@ -71,7 +71,10 @@ fun MiniPlayer(
             ) {
                 if (currentTrack.artworkUri != null) {
                     AsyncImage(
-                        model = currentTrack.artworkUri,
+                        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                            .data(currentTrack.artworkUri)
+                            .crossfade(true)
+                            .build(),
                         contentDescription = "Album Art",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

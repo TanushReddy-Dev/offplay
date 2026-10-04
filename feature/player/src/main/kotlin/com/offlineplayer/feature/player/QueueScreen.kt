@@ -61,7 +61,10 @@ fun QueueScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            itemsIndexed(queue) { index, track ->
+            itemsIndexed(
+                items = queue,
+                key = { _, track -> track.id }
+            ) { index, track ->
                 val isPlaying = state.queueIndex == index
 
                 Row(

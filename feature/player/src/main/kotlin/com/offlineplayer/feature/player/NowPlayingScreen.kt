@@ -101,7 +101,10 @@ fun NowPlayingScreen(
             ) {
                 if (track?.artworkUri != null) {
                     AsyncImage(
-                        model = track.artworkUri,
+                        model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                            .data(track.artworkUri)
+                            .crossfade(true)
+                            .build(),
                         contentDescription = "Album Art",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
