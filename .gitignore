@@ -1,0 +1,46 @@
+# Gradle
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Local configuration
+local.properties
+
+# Signing
+*.jks
+*.keystore
+release/
+
+# Generated APK/AAB
+*.apk
+*.aab
+
+# Secrets and credentials
+*.env
+secrets/
+api-keys/
+oauth/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Native crash reports
+*.dmp
+
+# Large test fixtures (commit only intentionally)
+test-fixtures/*.flac
+test-fixtures/*.wav
+test-fixtures/*.mp3
+
+# Machine-specific
+*.hprof
+captures/
