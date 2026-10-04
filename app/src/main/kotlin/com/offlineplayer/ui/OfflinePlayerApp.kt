@@ -54,36 +54,45 @@ fun OfflinePlayerApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val isPlayerRoute = currentDestination?.route == "player"
 
     Scaffold(
         bottomBar = {
-            Column {
-                com.offlineplayer.feature.player.MiniPlayer()
-                NavigationBar {
-                    navItems.forEach { item ->
-                        val selected = currentDestination?.hierarchy?.any {
-                            it.route == item.destination.route
-                        } == true
+            if (!isPlayerRoute) {
+                Column {
+                    com.offlineplayer.feature.player.MiniPlayer(
+                        onClick = {
+                            navController.navigate("player") {
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                    NavigationBar {
+                        navItems.forEach { item ->
+                            val selected = currentDestination?.hierarchy?.any {
+                                it.route == item.destination.route
+                            } == true
 
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(item.destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    navController.navigate(item.destination.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.destination.label,
-                                )
-                            },
-                            label = { Text(item.destination.label) },
-                        )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.destination.label,
+                                    )
+                                },
+                                label = { Text(item.destination.label) },
+                            )
+                        }
                     }
                 }
             }
@@ -107,6 +116,11 @@ fun OfflinePlayerApp() {
             }
             composable(TopLevelDestination.SETTINGS.route) {
                 PlaceholderScreen("Settings")
+            }
+            composable("player") {
+                com.offlineplayer.feature.player.NowPlayingScreen(
+                    onNavigateUp = { navController.navigateUp() }
+                )
             }
         }
     }
