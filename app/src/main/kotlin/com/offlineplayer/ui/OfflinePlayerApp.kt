@@ -1,6 +1,7 @@
 package com.offlineplayer.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -56,31 +57,34 @@ fun OfflinePlayerApp() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                navItems.forEach { item ->
-                    val selected = currentDestination?.hierarchy?.any {
-                        it.route == item.destination.route
-                    } == true
+            Column {
+                com.offlineplayer.feature.player.MiniPlayer()
+                NavigationBar {
+                    navItems.forEach { item ->
+                        val selected = currentDestination?.hierarchy?.any {
+                            it.route == item.destination.route
+                        } == true
 
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(item.destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(item.destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.destination.label,
-                            )
-                        },
-                        label = { Text(item.destination.label) },
-                    )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = item.destination.label,
+                                )
+                            },
+                            label = { Text(item.destination.label) },
+                        )
+                    }
                 }
             }
         },
