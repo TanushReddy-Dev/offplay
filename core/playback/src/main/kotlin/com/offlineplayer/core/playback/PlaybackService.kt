@@ -26,7 +26,17 @@ import androidx.media3.session.MediaSessionService
  * `foregroundServiceType="mediaPlayback"` and an intent filter for
  * `MediaSessionService`.
  */
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import androidx.media3.exoplayer.analytics.AnalyticsListener
+import androidx.media3.common.Format
+import androidx.media3.exoplayer.DecoderCounters
+import com.offlineplayer.core.model.AudioDiagnostics
+
+@AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
+
+    @Inject lateinit var diagnosticsReporter: AudioDiagnosticsReporter
 
     private var mediaSession: MediaSession? = null
 
@@ -44,6 +54,36 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+            
+        player.addAnalyticsListener(object : AnalyticsListener {
+            override fun onAudioInputFormatChanged(
+                eventTime: AnalyticsListener.EventTime,
+                format: Format,
+                decoderReuseEvaluation: androidx.media3.exoplayer.DecoderReuseEvaluation?
+            ) {
+                val diagnostics = AudioDiagnostics(
+                    sourceCodec = format.codecs ?: format.sampleMimeType,
+                    sourceContainer = format.containerMimeType,
+                    sourceSampleRate = format.sampleRate,
+                    sourceBitDepth = format.pcmEncoding,
+                    sourceChannels = format.channelCount,
+                    sourceBitrate = format.bitrate.toLong(),
+                )
+                diagnosticsReporter.report(diagnostics)
+            }
+            
+            override fun onPlayerError(
+                eventTime: AnalyticsListener.EventTime,
+                error: androidx.media3.common.PlaybackException
+            ) {
+                com.offlineplayer.core.model.AnalyticsLogger.logError(error, "Playback Error")
+                com.offlineplayer.core.model.AnalyticsLogger.logEvent("Playback_Error_Occurred", mapOf(
+                    "errorCode" to error.errorCode,
+                    "errorMessage" to (error.message ?: "Unknown")
+                ))
+                diagnosticsReporter.report(null)
+            }
+        })
 
         val sessionActivityIntent = packageManager
             ?.getLaunchIntentForPackage(packageName)

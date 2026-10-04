@@ -18,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +37,7 @@ import javax.inject.Singleton
 @Singleton
 class PlayerController @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val diagnosticsReporter: AudioDiagnosticsReporter
 ) {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var controller: MediaController? = null
@@ -45,6 +47,15 @@ class PlayerController @Inject constructor(
 
     private val _isConnected = MutableStateFlow(false)
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
+
+    init {
+        // Observe diagnostics and update state
+        kotlinx.coroutines.GlobalScope.launch {
+            diagnosticsReporter.diagnostics.collect { diag ->
+                _state.value = _state.value.copy(diagnostics = diag)
+            }
+        }
+    }
 
     // ── Connection ──────────────────────────────────────────────────
 
@@ -189,6 +200,7 @@ class PlayerController @Inject constructor(
 
     private fun syncState(mc: MediaController) {
         val currentItem = mc.currentMediaItem
+        val currentDiagnostics = _state.value.diagnostics
         _state.value = PlaybackState(
             isPlaying = mc.isPlaying,
             currentTrack = currentItem?.toTrack(),
@@ -198,6 +210,7 @@ class PlayerController @Inject constructor(
             queueSize = mc.mediaItemCount,
             shuffleEnabled = mc.shuffleModeEnabled,
             repeatMode = mc.repeatMode.toRepeatMode(),
+            diagnostics = currentDiagnostics
         )
     }
 

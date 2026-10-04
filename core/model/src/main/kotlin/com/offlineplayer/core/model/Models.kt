@@ -75,6 +75,7 @@ data class PlaybackState(
     val queueSize: Int = 0,
     val shuffleEnabled: Boolean = false,
     val repeatMode: RepeatMode = RepeatMode.OFF,
+    val diagnostics: AudioDiagnostics? = null,
 )
 
 enum class RepeatMode {

@@ -140,6 +140,31 @@ fun NowPlayingScreen(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    
+                    state.diagnostics?.let { diag ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        val sampleRateKhz = diag.sourceSampleRate / 1000f
+                        val bitrateKbps = diag.sourceBitrate / 1000
+                        val formatText = buildString {
+                            diag.sourceCodec?.let { append("${it.uppercase()} ") }
+                            if (diag.sourceBitDepth > 0) append("• ${diag.sourceBitDepth}bit ")
+                            if (sampleRateKhz > 0) append("• ${sampleRateKhz}kHz ")
+                            if (bitrateKbps > 0) append("• ${bitrateKbps}kbps")
+                        }
+                        if (formatText.isNotBlank()) {
+                            androidx.compose.material3.Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = formatText.trim(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
                 }
                 IconButton(onClick = { viewModel.toggleFavorite() }) {
                     Icon(
