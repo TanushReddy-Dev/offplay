@@ -55,7 +55,8 @@ import com.offlineplayer.core.model.RepeatMode
 @Composable
 fun NowPlayingScreen(
     viewModel: PlayerViewModel = hiltViewModel(),
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    onNavigateToQueue: () -> Unit
 ) {
     val state by viewModel.playbackState.collectAsStateWithLifecycle()
     val track = state.currentTrack
@@ -70,7 +71,7 @@ fun NowPlayingScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO Open Queue */ }) {
+                    IconButton(onClick = onNavigateToQueue) {
                         Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = "Queue")
                     }
                 },
@@ -137,7 +138,7 @@ fun NowPlayingScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                IconButton(onClick = { /* TODO toggle favorite */ }) {
+                IconButton(onClick = { viewModel.toggleFavorite() }) {
                     Icon(
                         imageVector = if (track?.isFavorite == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Favorite",

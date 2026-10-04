@@ -31,6 +31,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:playback"))
+    implementation(project(":core:database"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)

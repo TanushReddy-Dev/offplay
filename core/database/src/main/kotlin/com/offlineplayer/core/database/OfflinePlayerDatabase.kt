@@ -6,6 +6,9 @@ import com.offlineplayer.core.database.dao.LibraryDao
 import com.offlineplayer.core.database.entity.AlbumEntity
 import com.offlineplayer.core.database.entity.ArtistEntity
 import com.offlineplayer.core.database.entity.LocalFileEntity
+import com.offlineplayer.core.database.entity.PlaybackHistoryEntity
+import com.offlineplayer.core.database.entity.PlaylistEntity
+import com.offlineplayer.core.database.entity.PlaylistTrackCrossRef
 import com.offlineplayer.core.database.entity.TrackEntity
 
 @Database(
@@ -13,9 +16,12 @@ import com.offlineplayer.core.database.entity.TrackEntity
         TrackEntity::class,
         AlbumEntity::class,
         ArtistEntity::class,
-        LocalFileEntity::class
+        LocalFileEntity::class,
+        PlaylistEntity::class,
+        PlaylistTrackCrossRef::class,
+        PlaybackHistoryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class OfflinePlayerDatabase : RoomDatabase() {

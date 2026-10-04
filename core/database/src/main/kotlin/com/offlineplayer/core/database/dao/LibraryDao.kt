@@ -60,6 +60,42 @@ interface LibraryDao {
     @Query("DELETE FROM local_files WHERE uri = :uri")
     suspend fun deleteLocalFile(uri: String)
 
+    @Query("SELECT * FROM tracks WHERE isFavorite = 1 ORDER BY title ASC")
+    fun getFavoriteTracks(): Flow<List<TrackEntity>>
+
+    @Query("UPDATE tracks SET isFavorite = :isFavorite WHERE id = :trackId")
+    suspend fun updateTrackFavorite(trackId: Long, isFavorite: Boolean)
+
+    // --- Playlists ---
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertPlaylist(playlist: com.offlineplayer.core.database.entity.PlaylistEntity): Long
+
+    @Query("SELECT * FROM playlists ORDER BY name ASC")
+    fun getAllPlaylists(): Flow<List<com.offlineplayer.core.database.entity.PlaylistEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertPlaylistTrack(crossRef: com.offlineplayer.core.database.entity.PlaylistTrackCrossRef)
+
+    @Query("""
+        SELECT t.* FROM tracks t
+        INNER JOIN playlist_tracks pt ON t.id = pt.trackId
+        WHERE pt.playlistId = :playlistId
+        ORDER BY pt.dateAdded DESC
+    """)
+    fun getTracksForPlaylist(playlistId: Long): Flow<List<TrackEntity>>
+
+    // --- History ---
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertPlaybackHistory(history: com.offlineplayer.core.database.entity.PlaybackHistoryEntity)
+
+    @Query("""
+        SELECT t.* FROM tracks t
+        INNER JOIN playback_history h ON t.id = h.trackId
+        ORDER BY h.timestamp DESC
+        LIMIT :limit
+    """)
+    fun getPlaybackHistory(limit: Int = 50): Flow<List<TrackEntity>>
+
     // Helper transactions
     @Transaction
     suspend fun getOrCreateArtistId(name: String): Long {

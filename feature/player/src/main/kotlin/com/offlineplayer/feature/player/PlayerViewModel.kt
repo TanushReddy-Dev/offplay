@@ -8,9 +8,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
+import com.offlineplayer.core.database.dao.LibraryDao
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
+
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    private val playerController: PlayerController
+    private val playerController: PlayerController,
+    private val libraryDao: LibraryDao
 ) : ViewModel() {
 
     val playbackState: StateFlow<PlaybackState> = playerController.state
@@ -54,5 +59,17 @@ class PlayerViewModel @Inject constructor(
 
     fun clearQueue() {
         playerController.clearQueue()
+    }
+
+    fun toggleFavorite() {
+        val currentTrack = playbackState.value.currentTrack ?: return
+        val newFavoriteStatus = !currentTrack.isFavorite
+        
+        viewModelScope.launch {
+            libraryDao.updateTrackFavorite(currentTrack.id, newFavoriteStatus)
+            // Note: Optimistic UI update might be tricky here because playbackState comes from PlayerController.
+            // A more robust solution is to let the DAO expose the current track, but for now we just update DB.
+            // Next time the track is loaded it will have the new status.
+        }
     }
 }
