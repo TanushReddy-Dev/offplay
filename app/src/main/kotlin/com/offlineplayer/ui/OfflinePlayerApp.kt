@@ -99,7 +99,7 @@ fun OfflinePlayerApp() {
                 PlaceholderScreen("Search")
             }
             composable(TopLevelDestination.LIBRARY.route) {
-                PlaceholderScreen("Library")
+                com.offlineplayer.feature.library.LibraryScreen()
             }
             composable(TopLevelDestination.SETTINGS.route) {
                 PlaceholderScreen("Settings")

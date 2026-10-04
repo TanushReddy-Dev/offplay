@@ -1,7 +1,19 @@
 package com.offlineplayer.provider.local
 
-/**
- * Placeholder for the local file provider.
- * Will be implemented in Milestone 3 with MediaStore and SAF support.
- */
-object LocalProviderModule
+import com.offlineplayer.core.provider.api.CatalogProvider
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class LocalProviderModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindCatalogProvider(
+        localProvider: LocalProvider
+    ): CatalogProvider
+}
