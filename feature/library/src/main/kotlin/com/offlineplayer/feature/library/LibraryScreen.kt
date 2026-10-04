@@ -44,12 +44,15 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 
+import com.offlineplayer.provider.local.ScanState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scanState by viewModel.scanState.collectAsStateWithLifecycle()
     val showMenu = remember { mutableStateOf(false) }
 
     val folderLauncher = rememberLauncherForActivityResult(
@@ -63,7 +66,12 @@ fun LibraryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Library") },
+                title = { Text(
+                    text = when (scanState) {
+                        is ScanState.Scanning -> "Library (Scanning...)"
+                        else -> "Library"
+                    }
+                ) },
                 actions = {
                     IconButton(onClick = { viewModel.scanLocalMedia() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Scan Media")

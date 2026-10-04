@@ -12,6 +12,9 @@ import com.offlineplayer.core.database.entity.LocalFileEntity
 import com.offlineplayer.core.database.entity.TrackEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,9 +25,18 @@ class LocalLibraryScanner @Inject constructor(
     private val libraryDao: LibraryDao,
     private val safFolderManager: SafFolderManager
 ) {
+    private val _scanState = MutableStateFlow<ScanState>(ScanState.Idle)
+    val scanState: StateFlow<ScanState> = _scanState.asStateFlow()
+
     suspend fun scanMediaStore() = withContext(Dispatchers.IO) {
-        scanMediaStoreInternal()
-        scanSafFoldersInternal()
+        _scanState.value = ScanState.Scanning("Starting scan...")
+        try {
+            scanMediaStoreInternal()
+            scanSafFoldersInternal()
+            _scanState.value = ScanState.Idle
+        } catch (e: Exception) {
+            _scanState.value = ScanState.Error(e.message ?: "Unknown error during scan")
+        }
     }
 
     private suspend fun scanMediaStoreInternal() {

@@ -59,6 +59,8 @@ class LibraryViewModel @Inject constructor(
             initialValue = LibraryUiState.Loading
         )
 
+    val scanState = localProvider.scanState
+
     fun addSafFolder(uri: android.net.Uri) {
         safFolderManager.addFolder(uri)
         scanLocalMedia() // Trigger a scan immediately

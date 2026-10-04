@@ -14,6 +14,8 @@ class LocalProvider @Inject constructor(
     private val libraryDao: LibraryDao
 ) : CatalogProvider {
     
+    val scanState = scanner.scanState
+
     override val id: String = "local_provider"
     
     override val displayName: String = "Local Library"
