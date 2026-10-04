@@ -30,4 +30,9 @@ object DatabaseModule {
     fun provideLibraryDao(database: OfflinePlayerDatabase): LibraryDao {
         return database.libraryDao()
     }
+
+    @Provides
+    fun provideDownloadDao(database: OfflinePlayerDatabase): com.offlineplayer.core.database.dao.DownloadDao {
+        return database.downloadDao()
+    }
 }

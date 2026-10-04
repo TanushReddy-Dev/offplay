@@ -11,6 +11,10 @@ import com.offlineplayer.core.database.entity.PlaylistEntity
 import com.offlineplayer.core.database.entity.PlaylistTrackCrossRef
 import com.offlineplayer.core.database.entity.TrackEntity
 
+import com.offlineplayer.core.database.dao.DownloadDao
+import com.offlineplayer.core.database.entity.DownloadJobEntity
+import com.offlineplayer.core.database.entity.OfflineAssetEntity
+
 @Database(
     entities = [
         TrackEntity::class,
@@ -19,11 +23,14 @@ import com.offlineplayer.core.database.entity.TrackEntity
         LocalFileEntity::class,
         PlaylistEntity::class,
         PlaylistTrackCrossRef::class,
-        PlaybackHistoryEntity::class
+        PlaybackHistoryEntity::class,
+        DownloadJobEntity::class,
+        OfflineAssetEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class OfflinePlayerDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
+    abstract fun downloadDao(): DownloadDao
 }

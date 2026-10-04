@@ -37,6 +37,7 @@ import com.offlineplayer.core.model.AudioDiagnostics
 class PlaybackService : MediaSessionService() {
 
     @Inject lateinit var diagnosticsReporter: AudioDiagnosticsReporter
+    @Inject lateinit var playbackCache: PlaybackCache
 
     private var mediaSession: MediaSession? = null
 
@@ -49,10 +50,14 @@ class PlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .build()
 
+        val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(playbackCache.buildCacheDataSourceFactory())
+
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
+            .setMediaSourceFactory(mediaSourceFactory)
             .build()
             
         player.addAnalyticsListener(object : AnalyticsListener {
